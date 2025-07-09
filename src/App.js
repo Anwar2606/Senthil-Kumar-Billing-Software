@@ -37,6 +37,7 @@ import RetailEditBillPage from './pages/Retail Edit bill/RetailEditBill';
 import WholesaleEditBillPage from './pages/Edit Wholesale Copy/EditWholesaleCopy';
 import WayBillCopy from './pages/Way bill copy/WayBillCopy';
 import WayBillEditBillPage from './pages/Edit Waybill/EditWayBill';
+import EditCustomer from './pages/Edit Customer/EditCustomer';
 
 
 
@@ -103,6 +104,7 @@ const isBillingPage = location.pathname === '/invoicebill' || location.pathname 
           <Route path="/waybillcopy" element={<WayBillCopy />} />
           <Route path="/wholesalecopy" element={<WholesaleCopy />} />
           <Route path="/wholesalebill" element={<WholesaleBill />} />
+          <Route path="/editcustomer/:id" element={<EditCustomer />} />
            <Route path="/waybill" element={<WayBill />} />
           <Route path="/showcustomers" element={<ShowCustomers />} />
           <Route path="/addcustomer" element={<AddCustomer />} />

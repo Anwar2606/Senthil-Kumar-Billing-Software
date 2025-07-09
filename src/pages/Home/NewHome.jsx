@@ -19,7 +19,7 @@ import Card1 from "../assets/card1.png";
 import Card2 from "../assets/cardnew22.png";
 import Card3 from "../assets/cardnew3.png";
 import Card22 from "../assets/card22.png";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, Timestamp, where } from "firebase/firestore";
 import { db } from "../firebase";
 import SalesComparisonChart from "../Chart/SalesComparisonChart";
 import { Link } from "react-router-dom";
@@ -48,35 +48,35 @@ const NewHome = () => {
     }, []);
 
     useEffect(() => {
-        const fetchTodaySales = async () => {
-            const now = new Date();
-            const startOfDay = new Date(now.setHours(0, 0, 0, 0));
-            const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+    const fetchTodaySales = async () => {
+      const now = new Date();
+      const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(now.setHours(23, 59, 59, 999));
 
-            const todayBillingQuery = query(
-                collection(db, "invoicebilling"), // ✅ Correct collection
-                where("date", ">=", startOfDay),
-                where("date", "<=", endOfDay)
-            );
+      try {
+        const q = query(
+          collection(db, "invoicebilling"),
+          where("date", ">=", Timestamp.fromDate(startOfDay)),
+          where("date", "<=", Timestamp.fromDate(endOfDay))
+        );
 
-            try {
-                const querySnapshot = await getDocs(todayBillingQuery);
-                let totalAmount = 0;
+        const snapshot = await getDocs(q);
+        let total = 0;
 
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const amount = parseFloat(data.totalAmount ?? 0);
-                    if (!isNaN(amount)) totalAmount += amount;
-                });
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const amount = parseFloat(data.totalAmount ?? 0);
+          if (!isNaN(amount)) total += amount;
+        });
 
-                setTodaySales(totalAmount);
-            } catch (error) {
-                console.error("Error fetching today's sales:", error);
-            }
-        };
+        setTodaySales(total);
+      } catch (error) {
+        console.error("Error fetching today's sales:", error);
+      }
+    };
 
-        fetchTodaySales();
-    }, []);
+    fetchTodaySales();
+  }, []);
 
     useEffect(() => {
         const fetchBills = async () => {
@@ -123,27 +123,7 @@ const NewHome = () => {
         setIsOpen(!isOpen);
     };
 
-    const chartData = {
-        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-        datasets: [
-            {
-                label: "Monthly Sales (₹)",
-                data: monthlySales,
-                backgroundColor: "rgba(75, 192, 192, 0.6)",
-                borderColor: "rgba(75, 192, 192, 1)",
-                borderWidth: 1,
-            },
-        ],
-    };
-
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: "top" },
-            title: { display: true, text: "12-Month Sales Comparison" },
-        },
-    };
+    
 
     return (
         <div className="main-container">

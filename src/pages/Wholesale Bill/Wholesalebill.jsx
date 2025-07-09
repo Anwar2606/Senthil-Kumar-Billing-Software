@@ -423,9 +423,10 @@ doc.text('ESTIMATE FOR WHOLESALE', 150, headerStartY + 5);
 doc.setFont('helvetica', 'bold');
 doc.setFontSize(9);
 
+doc.setTextColor(255, 0, 0);
+doc.text(`Estimate Number: SKFI-${invoiceNumber}-25`, 150, headerStartY + 1 + 1.7 * lineSpacing);
 doc.setTextColor(0, 0, 0);
-doc.text(`Estimate Number: SKFI-${invoiceNumber}-25`, 150, headerStartY + 2 + 2 * lineSpacing);
-doc.text(`Date: ${formattedDate}`, 150, headerStartY + 5 + 3 * lineSpacing);
+doc.text(`Date: ${formattedDate}`, 150, headerStartY + 2 + 2.5 * lineSpacing);
 doc.setFont('helvetica', 'bold');
 
 
@@ -437,43 +438,95 @@ doc.rect(14, headerStartY - 2, 182, headerEndY - headerStartY + 4);
 
 
   // Start Customer Details table
-  let startY = headerEndY + 5;
+ let startY = headerEndY + 5;
 
-  const customerDetails = [
-    ['TO', '', 'Account Details', ''],
-    ['Name', customerName, 'A/c Holder Name', 'SENTIHILKUMAR FIREWORKS INDUSTRIES'],
-    ['Address', customerAddress, 'A/c Number', '403536101501661'],
-    ['State', customerState, 'Bank Name', 'TAMILNAD MERCANTILE BANK'],
-    ['Phone', customerPhoneNo, 'Branch', 'TMB SITHURAJAPURAM'],
-    ['GSTIN', customerGSTIN, 'IFSC Code', 'TMBL0000403'],
-    ['PAN', customerPan || '-', '', '']
-  ];
+const customerDetails = [
+  ['TO', '', 'Account Details', ''],
+  ['Name', customerName, 'A/c Holder Name', 'SENTIHILKUMAR FIREWORKS INDUSTRIES'],
+  ['Address', customerAddress, 'A/c Number', '403536101501661'],
+  ['State', customerState, 'Bank Name', 'TAMILNAD MERCANTILE BANK'],
+  ['Phone', customerPhoneNo, 'Branch', 'TMB SITHURAJAPURAM'],
+  ['GSTIN', customerGSTIN, 'IFSC Code', 'TMBL0000403'],
+  ['PAN', customerPan || '-', '', '']
+];
 
-  doc.autoTable({
-    body: customerDetails,
-    startY,
-    theme: 'grid',
-    styles: { fontSize: 9 , lineColor :[0,0,0], textColor:[0,0,0]},
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 25 },
-      1: { cellWidth: 60 },
-      2: { fontStyle: 'bold', cellWidth: 35 },
-      3: { cellWidth: 62 }
-    },
-    didDrawCell: (data) => {
-      if (data.cell.section === 'body') {
-        data.cell.styles.lineWidth = {
-          top: 0,
-          bottom: 0,
-          left: 0.2,
-          right: 0.2
-        };
-      }
+const customerStartY = startY; // Save top Y position
+
+doc.autoTable({
+  body: customerDetails,
+  startY: customerStartY,
+  theme: 'plain',
+  styles: {
+    fontSize: 9,
+    textColor: [0, 0, 0],
+    cellPadding: 1.5
+  },
+  columnStyles: {
+    0: { fontStyle: 'normal', cellWidth: 27 },
+    1: { cellWidth: 60 },
+    2: { fontStyle: 'normal', cellWidth: 30 },
+    3: { cellWidth: 70,fontSize:8.5, }
+  },
+  didParseCell: function (data) {
+    if (data.row.index === 0 && (data.column.index === 0 || data.column.index === 2)) {
+      data.cell.styles.fontSize = 10;
+      data.cell.styles.fontStyle = 'bold';
+      data.cell.styles.textColor = [204, 0, 102]; // Pink
     }
-  });
+  },
+  didDrawCell: (data) => {
+    if (data.cell.section === 'body') {
+      data.cell.styles.lineWidth = {
+        top: 0,
+        bottom: 0,
+        left: 0.2,
+        right: 0.2
+      };
+    }
+    if (data.cell.section === 'body') {
+  // Draw colon after left label (column 0)
+ // Left section colon (after column 0)
+if (data.column.index === 0 && data.row.index !== 0) {
+  const x = data.cell.x + data.cell.width + 0; // ⬅️ increase horizontal spacing
+  const y = data.cell.y + data.cell.height / 2 + 0.1; // ⬇️ improve vertical centering
+  doc.setFontSize(9);
+  doc.text(':', x, y, { baseline: 'middle' });
+}
+
+// Right section colon (after column 2) — skip first and last rows
+if (
+  data.column.index === 2 &&
+  data.row.index !== 0 &&
+  data.row.index !== data.table.body.length - 1
+) {
+  const x = data.cell.x + data.cell.width + 0;
+  const y = data.cell.y + data.cell.height / 2 + 0.1;
+  doc.setFontSize(9);
+  doc.text(':', x, y, { baseline: 'middle' });
+}
+
+
+}
+
+  }
+  
+});
+
+// ✅ Draw full outer border
+const customerEndY = doc.autoTable.previous.finalY;
+doc.setDrawColor(0);
+doc.setLineWidth(0.1);
+doc.rect(14, customerStartY - 2, 182, customerEndY - customerStartY + 4);
+
+// ✅ Draw center line between left and right section
+const centerX = 14 + 25 + 60; // left margin + width of col 0 + col 1 = 99
+doc.setDrawColor(0);
+doc.setLineWidth(0.2);
+doc.line(centerX, customerStartY - 2, centerX, customerEndY + 2); // vertical line
+
 
   // Start Products Table
-  startY = doc.autoTable.previous.finalY + 5;
+  startY = doc.autoTable.previous.finalY + 3;
 
   const tableBody = cart.map((item, index) => [
     index + 1,
@@ -550,38 +603,42 @@ doc.autoTable({
   doc.text(`Rupees: ${grandTotalInWords}`, borderMargin + 5, startY);
 
   const terms = [
-    '1. Goods once sold will not be taken back.',
-    '2. All matters Subject to "Sivakasi" jurisdiction only.'
-  ];
+  '1. Goods once sold will not be taken back.',
+  '2. All matters Subject to "Sivakasi" jurisdiction only.',
+  '3. Certified that the particulars given above are true and correct.'
+];
 
-  const padding = 6;
-  const lineHeight = 6;
-  const boxX = borderMargin + 4;
-  const boxY = startY + 6;
-  const boxWidth = pageWidth - 2 * (borderMargin + 4);
-  const boxHeight = 50;
+const padding = 10;
+const lineHeight = 7;
+const boxX = borderMargin + 4;
+const boxY = startY + 6;
+const boxWidth = pageWidth - 2 * (borderMargin + 4);
+const boxHeight = 45; // Increased height to fit 3 lines
 
-  doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.2);
-  doc.rect(boxX, boxY, boxWidth, boxHeight);
+doc.setDrawColor(0, 0, 0);
+doc.setLineWidth(0.2);
+doc.rect(boxX, boxY, boxWidth, boxHeight);
 
-  let currentY = boxY + padding;
-  doc.setFont('helvetica', 'bold');
-  doc.text('Terms & Conditions', boxX + padding, currentY);
+let currentY = boxY + padding;
+doc.setFont('helvetica', 'bold');
+doc.text('Terms & Conditions', boxX + padding, currentY);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(0, 0, 0);
+doc.setFont('helvetica', 'normal');
+doc.setTextColor(0, 0, 0);
+
+// Draw all terms dynamically
+terms.forEach(term => {
   currentY += lineHeight;
-  doc.text(terms[0], boxX + padding, currentY);
+  doc.text(term, boxX + padding, currentY);
+});
 
-  currentY += lineHeight;
-  doc.text(terms[1], boxX + padding, currentY);
+// Signature at the same vertical level as last line
+const authSig = 'Authorised Signature';
+const authSigWidth = doc.getTextWidth(authSig);
+const authSigX = boxX + boxWidth - authSigWidth - padding;
+doc.setFont('helvetica', 'bold');
+doc.text(authSig, authSigX, currentY);
 
-  const authSig = 'Authorised Signature';
-  const authSigWidth = doc.getTextWidth(authSig);
-  const authSigX = boxX + boxWidth - authSigWidth - padding;
-  doc.setFont('helvetica', 'bold');
-  doc.text(authSig, authSigX, currentY);
 };
 const handleGenerateAllCopies = async () => {
   const invoiceNumber = manualInvoiceNumber.trim();

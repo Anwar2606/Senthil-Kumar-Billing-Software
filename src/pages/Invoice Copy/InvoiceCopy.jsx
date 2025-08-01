@@ -218,7 +218,7 @@ doc.setTextColor(0, 0, 0);
 doc.text(`Date: ${formattedDate}`, 150, headerStartY + 5 + 3 * lineSpacing);
 
 // ✅ GSTIN
-doc.text('GSTIN: 33ABVF6600E1Z4', 150, headerStartY + 5 + 4 * lineSpacing);
+doc.text('GSTIN: 33ABVFS6600E1Z4', 150, headerStartY + 5 + 4 * lineSpacing);
 
   const headerEndY = headerStartY + 5 + 8 * lineSpacing;
   doc.setDrawColor(0, 0, 0);
@@ -301,7 +301,7 @@ doc.text('GSTIN: 33ABVF6600E1Z4', 150, headerStartY + 5 + 4 * lineSpacing);
 
   const discountAmt = (totalAmount * (parseFloat(discountPercentage) / 100)).toFixed(2);
   const totalQuantity = detail.productsDetails.reduce((acc, item) => acc + (item.quantity || 0), 0);
-  
+
   tableBody.push(
     [{ content: 'Total Amount:', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } }, `${Math.round(totalAmount)}.00`],
     [{ content: `Discount (${discountPercentage}%):`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } }, discountAmt],

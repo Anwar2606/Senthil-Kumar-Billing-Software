@@ -191,7 +191,7 @@ const formattedInvoiceNumber = String(invoiceNumber).padStart(3, '0');
 doc.text(`Invoice Number: ${formattedInvoiceNumber}`, 150, headerStartY + 1 + 1.7 * lineSpacing);
   doc.setTextColor(0, 0, 0);
   doc.text(`Date: ${formattedDate}`, 150, headerStartY + 2 + 2.5 * lineSpacing);
-  doc.text('GSTIN: 33ABVF6600E1Z4', 150, headerStartY + 3 + 3.3 * lineSpacing);
+  doc.text('GSTIN: 33ABVFS6600E1Z4', 150, headerStartY + 3 + 3.3 * lineSpacing);
 
 
   const headerEndY = headerStartY + 5 + 8 * lineSpacing;

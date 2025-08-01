@@ -427,7 +427,7 @@ const formattedInvoiceNumber = String(invoiceNumber).padStart(3, '0');
 doc.text(`Invoice Number: ${formattedInvoiceNumber}`, 150, headerStartY + 5 + 2 * lineSpacing);
 doc.text(`Date: ${formattedDate}`, 150, headerStartY + 5 + 3 * lineSpacing);
 doc.setFontSize(8);
-doc.text('GSTIN Number:33ABVF6600E1Z4', 150, headerStartY + 5 + 4 * lineSpacing);
+doc.text('GSTIN Number:33ABVFS6600E1Z4', 150, headerStartY + 5 + 4 * lineSpacing);
 doc.setFont('helvetica', 'bold');
 
 

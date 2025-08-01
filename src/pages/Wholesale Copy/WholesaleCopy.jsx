@@ -90,23 +90,30 @@ useEffect(() => {
 const toggleSidebar = () => {
   setIsOpen(!isOpen);
 };
-const formatDate = (createdAt) => {
-  let createdAtDate;
+// const formatDate = (createdAt) => {
+//   let createdAtDate;
 
-  // Convert createdAt to a Date object
-  if (createdAt instanceof Timestamp) {
-    createdAtDate = createdAt.toDate();
-  } else if (typeof createdAt === 'string' || createdAt instanceof Date) {
-    createdAtDate = new Date(createdAt);
-  } else {
-    return 'Invalid Date'; // Handle cases where createdAt is not valid
-  }
+//   // Convert createdAt to a Date object
+//   if (createdAt instanceof Timestamp) {
+//     createdAtDate = createdAt.toDate();
+//   } else if (typeof createdAt === 'string' || createdAt instanceof Date) {
+//     createdAtDate = new Date(createdAt);
+//   } else {
+//     return 'Invalid Date'; // Handle cases where createdAt is not valid
+//   }
 
-  // Format the date as 'MM/DD/YYYY' or any desired format
-  return !isNaN(createdAtDate.getTime())
-    ? createdAtDate.toLocaleDateString() // Returns only the date portion (e.g., "8/27/2024")
-    : 'Invalid Date';
-};  
+//   // Format the date as 'MM/DD/YYYY' or any desired format
+//   return !isNaN(createdAtDate.getTime())
+//     ? createdAtDate.toLocaleDateString() // Returns only the date portion (e.g., "8/27/2024")
+//     : 'Invalid Date';
+// };  
+function formatDate(date) {
+  const d = date instanceof Date ? date : new Date(date); // Handles Timestamp or string
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 const generatePDF = async (detail, copyType, billType, logoBase64) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -126,6 +133,7 @@ const generatePDF = async (detail, copyType, billType, logoBase64) => {
     customerState,
     customerPhoneNo,
     customerGSTIN,
+    customerEmail,
     customerPan,
     invoiceNumber,
     createdAt,
@@ -139,7 +147,8 @@ const generatePDF = async (detail, copyType, billType, logoBase64) => {
     transportName
   } = detail;
 
-  const formattedDate = formatDate(createdAt);
+const formattedDate = formatDate(createdAt.toDate ? createdAt.toDate() : createdAt);
+
   const headerStartY = 14;
   const lineSpacing = 6;
   const startX = 18;
@@ -180,7 +189,8 @@ try {
   doc.setFontSize(9);
   doc.setTextColor(255, 0, 0);
   doc.text('ESTIMATE FOR WHOLESALE', 150, headerStartY + 5);
-  doc.text(`Estimate Number: SKFI-${invoiceNumber}-25`, 150, headerStartY + 1 + 1.7 * lineSpacing);
+const formattedInvoiceNumber = String(invoiceNumber).padStart(3, '0');
+doc.text(`Estimate Number: ${formattedInvoiceNumber}`, 150, headerStartY + 1 + 1.7 * lineSpacing);
   doc.setTextColor(0, 0, 0);
   doc.text(`Date: ${formattedDate}`, 150, headerStartY + 2 + 2.5 * lineSpacing);
 
@@ -194,13 +204,14 @@ try {
   let startY = headerEndY - 10;
   const customerDetails = [
     ['TO', '', 'Account Details', ''],
-    ['Name', clean(customerName), 'A/c Holder Name', 'SENTIHILKUMAR FIREWORKS INDUSTRIES'],
-    ['Address', clean(customerAddress), 'A/c Number', '403536101501661'],
-    ['State', clean(customerState), 'Bank Name', 'TAMILNAD MERCANTILE BANK'],
-    ['Phone', clean(customerPhoneNo), 'Branch', 'TMB SITHURAJAPURAM'],
-    ['GSTIN', clean(customerGSTIN), 'IFSC Code', 'TMBL0000403'],
-    ['PAN', clean(customerPan), '', '']
-  ];
+  ['Name', customerName, 'A/c Holder Name', 'SENTIHILKUMAR FIREWORKS INDUSTRIES'],
+  ['Address', customerAddress, 'A/c Number', '403536101501661'],
+  ['State', customerState, 'Bank Name', 'TAMILNAD MERCANTILE BANK'],
+  ['Phone', customerPhoneNo, 'Branch', 'TMB SITHURAJAPURAM'],
+  ['Aadhar', customerEmail || '-', 'IFSC Code', 'TMBL0000403'],
+  ['GSTIN', customerGSTIN, '', ''],
+  ['PAN', customerPan || '-', '', '']
+];
 
   const customerStartY = startY;
   doc.autoTable({
@@ -232,12 +243,18 @@ try {
           doc.text(':', x, y, { baseline: 'middle' });
         }
 
-        if (data.column.index === 2 && data.row.index !== 0 && data.row.index !== data.table.body.length - 1) {
-          const x = data.cell.x + data.cell.width;
-          const y = data.cell.y + data.cell.height / 2 + 0.1;
-          doc.setFontSize(9);
-          doc.text(':', x, y, { baseline: 'middle' });
-        }
+       if (
+  data.column.index === 2 &&
+  data.row.index !== 0 &&
+  data.row.index < data.table.body.length - 2 // ✅ Hide last 2 rows
+) {
+  const x = data.cell.x + data.cell.width;
+  const y = data.cell.y + data.cell.height / 2 + 0.1;
+  doc.setFontSize(9);
+  doc.text(':', x, y, { baseline: 'middle' });
+}
+
+
       }
     }
   });
@@ -259,14 +276,19 @@ try {
     `Rs. ${item.saleprice?.toFixed(2) || '0.00'}`,
     `Rs. ${((item.quantity || 0) * (item.saleprice || 0)).toFixed(2)}`
   ]);
-
+const totalQuantity = detail.productsDetails.reduce((acc, item) => acc + (item.quantity || 0), 0);
   const discountAmt = (totalAmount * (parseFloat(discountPercentage) / 100)).toFixed(2);
 
   tableBody.push(
     [{ content: 'Total Amount:', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } }, `${Math.round(totalAmount)}.00`],
     [{ content: `Discount (${discountPercentage}%):`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } }, discountAmt],
     [{ content: 'Sub Total:', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } }, `${Math.round(discountedTotal)}.00`],
+    [
+    { content: `Total Quantity: ${totalQuantity}`, colSpan: 2, styles: { halign: 'left', fontStyle: 'bold' } },
+    // { content: `Total Products: ${totalProducts}`, colSpan: 2, styles: { halign: 'right', fontStyle: 'bold' } }
+  ],
     [{ content: 'Grand Total:', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } }, `${Math.round(grandTotal)}.00`],
+    
     [{ content: 'Despatched From:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, despatchedFrom || 'N/A'],
     [{ content: 'Despatched To:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, despatchedTo || 'N/A'],
     [{ content: 'Transport Name:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, transportName || 'N/A']

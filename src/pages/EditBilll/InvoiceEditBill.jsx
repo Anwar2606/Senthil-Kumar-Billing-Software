@@ -220,23 +220,13 @@ const handleInputChange = (e, index = null, type = null) => {
 //     pdf.save(`Invoice_Copies_${bill.invoiceNumber}.pdf`); // Save the PDF with the invoice number
 //   };
 
-const formatDate = (createdAt) => {
-    let createdAtDate;
-  
-    // Convert createdAt to a Date object
-    if (createdAt instanceof Timestamp) {
-      createdAtDate = createdAt.toDate();
-    } else if (typeof createdAt === 'string' || createdAt instanceof Date) {
-      createdAtDate = new Date(createdAt);
-    } else {
-      return 'Invalid Date'; // Handle cases where createdAt is not valid
-    }
-  
-    // Format the date as 'MM/DD/YYYY' or any desired format
-    return !isNaN(createdAtDate.getTime())
-      ? createdAtDate.toLocaleDateString() // Returns only the date portion (e.g., "8/27/2024")
-      : 'Invalid Date';
-  };
+function formatDate(date) {
+  const d = date instanceof Date ? date : new Date(date); // Handles Timestamp or string
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
   const generateAllCopiesPDF = async (detail, billType, logoBase64) => {
     const copyTypes = ['TRANSPORT', 'SALES', 'OFFICE', 'CUSTOMER'];
     const doc = new jsPDF();
@@ -271,6 +261,7 @@ const generateSingleCopy = async (doc, detail, copyType, billType, logoBase64) =
     customerGSTIN,
     customerPan,
     invoiceNumber,
+    customerEmail,
     createdAt,
     productsDetails = [],
     totalAmount = 0,
@@ -285,7 +276,7 @@ const generateSingleCopy = async (doc, detail, copyType, billType, logoBase64) =
     igstAmount = 0
   } = detail;
 
-  const formattedDate = formatDate(createdAt);
+const formattedDate = formatDate(createdAt.toDate ? createdAt.toDate() : createdAt);
   const headerStartY = 14;
   const lineSpacing = 6;
   const startX = 18;
@@ -330,7 +321,8 @@ doc.text(`${copyType} COPY`, 150, headerStartY + 5 + lineSpacing); // +6 becomes
 
 // ✅ INVOICE NUMBER
 doc.setTextColor(255, 0, 0);
-doc.text(`Invoice Number: SKFI-${invoiceNumber}-25`, 150, headerStartY + 5 + 2 * lineSpacing);
+const formattedInvoiceNumber = String(invoiceNumber).padStart(3, '0');
+doc.text(`Invoice Number: ${formattedInvoiceNumber}`, 150, headerStartY + 5 + 2 * lineSpacing);
 
 // ✅ DATE
 doc.setTextColor(0, 0, 0);
@@ -347,13 +339,14 @@ doc.text('GSTIN: 33ABVF6600E1Z4', 150, headerStartY + 5 + 4 * lineSpacing);
   let startY = headerEndY - 10;
   const customerDetails = [
     ['TO', '', 'Account Details', ''],
-    ['Name', clean(customerName), 'A/c Holder Name', 'SENTIHILKUMAR FIREWORKS INDUSTRIES'],
-    ['Address', clean(customerAddress), 'A/c Number', '403536101501661'],
-    ['State', clean(customerState), 'Bank Name', 'TAMILNAD MERCANTILE BANK'],
-    ['Phone', clean(customerPhoneNo), 'Branch', 'TMB SITHURAJAPURAM'],
-    ['GSTIN', clean(customerGSTIN), 'IFSC Code', 'TMBL0000403'],
-    ['PAN', clean(customerPan), '', '']
-  ];
+  ['Name', customerName, 'A/c Holder Name', 'SENTIHILKUMAR FIREWORKS INDUSTRIES'],
+  ['Address', customerAddress, 'A/c Number', '403536101501661'],
+  ['State', customerState, 'Bank Name', 'TAMILNAD MERCANTILE BANK'],
+  ['Phone', customerPhoneNo, 'Branch', 'TMB SITHURAJAPURAM'],
+  ['Aadhar', customerEmail || '-', 'IFSC Code', 'TMBL0000403'],
+  ['GSTIN', customerGSTIN, '', ''],
+  ['PAN', customerPan || '-', '', '']
+];
 
   const customerStartY = startY;
   doc.autoTable({
@@ -385,12 +378,17 @@ doc.text('GSTIN: 33ABVF6600E1Z4', 150, headerStartY + 5 + 4 * lineSpacing);
           doc.text(':', x, y, { baseline: 'middle' });
         }
 
-        if (data.column.index === 2 && data.row.index !== 0 && data.row.index !== data.table.body.length - 1) {
-          const x = data.cell.x + data.cell.width;
-          const y = data.cell.y + data.cell.height / 2 + 0.1;
-          doc.setFontSize(9);
-          doc.text(':', x, y, { baseline: 'middle' });
-        }
+         if (
+  data.column.index === 2 &&
+  data.row.index !== 0 &&
+  data.row.index < data.table.body.length - 2 // ✅ Hide last 2 rows
+) {
+  const x = data.cell.x + data.cell.width;
+  const y = data.cell.y + data.cell.height / 2 + 0.1;
+  doc.setFontSize(9);
+  doc.text(':', x, y, { baseline: 'middle' });
+}
+
       }
     }
   });

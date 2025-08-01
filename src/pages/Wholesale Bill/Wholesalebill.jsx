@@ -393,7 +393,7 @@ const generatePDFPage = (doc, copyType, invoiceNumber, logoBase64) => {
 const lineSpacing = 6;
 const startX = 18;
 
-const formattedDate = selectedDate.toLocaleDateString();
+const formattedDate = selectedDate.toLocaleDateString('en-GB');
 
 // Add Logo
 doc.addImage(logoBase64, 'JPEG', startX, headerStartY + 1, 27, 27); // Increased from 22x22 to 30x30
@@ -424,7 +424,8 @@ doc.setFont('helvetica', 'bold');
 doc.setFontSize(9);
 
 doc.setTextColor(255, 0, 0);
-doc.text(`Estimate Number: SKFI-${invoiceNumber}-25`, 150, headerStartY + 1 + 1.7 * lineSpacing);
+const formattedInvoiceNumber = String(invoiceNumber).padStart(3, '0');
+doc.text(`Estimate Number: ${formattedInvoiceNumber}`, 150, headerStartY + 1 + 1.7 * lineSpacing);
 doc.setTextColor(0, 0, 0);
 doc.text(`Date: ${formattedDate}`, 150, headerStartY + 2 + 2.5 * lineSpacing);
 doc.setFont('helvetica', 'bold');
@@ -446,11 +447,12 @@ const customerDetails = [
   ['Address', customerAddress, 'A/c Number', '403536101501661'],
   ['State', customerState, 'Bank Name', 'TAMILNAD MERCANTILE BANK'],
   ['Phone', customerPhoneNo, 'Branch', 'TMB SITHURAJAPURAM'],
-  ['GSTIN', customerGSTIN, 'IFSC Code', 'TMBL0000403'],
+  ['Aadhar', customerEmail || '-', 'IFSC Code', 'TMBL0000403'],
+  ['GSTIN', customerGSTIN, '', ''],
   ['PAN', customerPan || '-', '', '']
 ];
 
-const customerStartY = startY; // Save top Y position
+const customerStartY = startY;
 
 doc.autoTable({
   body: customerDetails,
@@ -465,7 +467,7 @@ doc.autoTable({
     0: { fontStyle: 'normal', cellWidth: 27 },
     1: { cellWidth: 60 },
     2: { fontStyle: 'normal', cellWidth: 30 },
-    3: { cellWidth: 70,fontSize:8.5, }
+    3: { cellWidth: 70, fontSize: 8.5 }
   },
   didParseCell: function (data) {
     if (data.row.index === 0 && (data.column.index === 0 || data.column.index === 2)) {
@@ -483,33 +485,30 @@ doc.autoTable({
         right: 0.2
       };
     }
-    if (data.cell.section === 'body') {
-  // Draw colon after left label (column 0)
- // Left section colon (after column 0)
-if (data.column.index === 0 && data.row.index !== 0) {
-  const x = data.cell.x + data.cell.width + 0; // ⬅️ increase horizontal spacing
-  const y = data.cell.y + data.cell.height / 2 + 0.1; // ⬇️ improve vertical centering
-  doc.setFontSize(9);
-  doc.text(':', x, y, { baseline: 'middle' });
-}
 
-// Right section colon (after column 2) — skip first and last rows
-if (
+    if (data.cell.section === 'body') {
+      // Left section colon (after column 0)
+      if (data.column.index === 0 && data.row.index !== 0) {
+        const x = data.cell.x + data.cell.width + 0;
+        const y = data.cell.y + data.cell.height / 2 + 0.1;
+        doc.setFontSize(9);
+        doc.text(':', x, y, { baseline: 'middle' });
+      }
+
+      // Right section colon (after column 2)
+       if (
   data.column.index === 2 &&
   data.row.index !== 0 &&
-  data.row.index !== data.table.body.length - 1
+  data.row.index < data.table.body.length - 2 // ✅ Hide last 2 rows
 ) {
-  const x = data.cell.x + data.cell.width + 0;
+  const x = data.cell.x + data.cell.width;
   const y = data.cell.y + data.cell.height / 2 + 0.1;
   doc.setFontSize(9);
   doc.text(':', x, y, { baseline: 'middle' });
 }
 
-
-}
-
+    }
   }
-  
 });
 
 // ✅ Draw full outer border
@@ -553,9 +552,17 @@ doc.line(centerX, customerStartY - 2, centerX, customerEndY + 2); // vertical li
   //     [{ content: 'IGST (18%):', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } }, `${Math.round(billingDetails.igstAmount)}.00`]
   //   );
   // }
-
+const totalQuantity = cart.reduce((sum, item) => {
+  const quantity = parseFloat(item.quantity);
+  return sum + (isNaN(quantity) ? 0 : quantity);
+}, 0);
   tableBody.push(
-    [{ content: 'Grand Total:', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } }, `${Math.round(billingDetails.grandTotal)}.00`]
+    [{ content: 'Grand Total:', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } }, `${Math.round(billingDetails.grandTotal)}.00`],
+     [
+
+    { content: 'Total Quantity:', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } },
+    `${totalQuantity}`
+  ]
   );
   tableBody.push(
         [
@@ -1014,9 +1021,9 @@ return (
    value={customerPan}
    onChange={(e) => setCustomerPAN(e.target.value)}
  />
- <label>Customer Email</label>
+ <label>Aadhar</label>
  <input
-   type="email"
+   type="text"
    value={customerEmail}
    onChange={(e) => setCustomerEmail(e.target.value)}
  />

@@ -156,14 +156,7 @@ let estimateType = '';
 
 doc.autoTable({
   body: [
-    ['SRI DURGA CRACKERS', '', estimateType],
-    ['Address:1/90Z6, Balaji Nagar, Anna Colony', '', `Estimate Number: SDC-${detail.invoiceNumber}-25`],
-    ['Vadamamalapuram ', '', `Date:${formattedDate}`],
-    ['Thiruthangal - 626130', '', ''],
-    ['Sivakasi (Zone)', '', ''],
-    ['Virudhunagar (Dist)', '', ''],
-    ['State: 33-Tamil Nadu', '', ''],
-    ['Phone number: 97514 87277 / 95853 58106', '', '']
+   
   ],
   startY: headerTableStartY,
   theme: 'plain',
@@ -199,13 +192,7 @@ doc.rect(14, headerTableStartY, pageWidth - 28, headerTableEndY - headerTableSta
 
 
   const customerAccountTable = [
-    ['TO', '', 'Account Details', ''],
-    ['Name', clean(customerName), 'A/c Holder Name', 'RAJESH KANNAN'],
-    ['Address', clean(customerAddress), 'A/c Number', '33098100000505'],
-    ['State', clean(customerState), 'Bank Name', 'BANK OF BARODA'],
-    ['Phone', clean(customerPhoneNo), 'Branch', 'SIVAKASI'],
-    ['GSTIN', clean(customerGSTIN), 'IFSC Code', 'BARB0SIVAKA'],
-    ['PAN', clean(customerPan), '', '']
+   
   ];
 
   doc.autoTable({

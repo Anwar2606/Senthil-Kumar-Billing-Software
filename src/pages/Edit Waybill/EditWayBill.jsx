@@ -62,6 +62,7 @@ const handleEdit = (bill) => {
 
 
 
+
 //   const handleInputChange = (e, index, field) => {
 //     const { name, value } = e.target;
 
@@ -179,11 +180,11 @@ const handleInputChange = (e, index = null, type = null) => {
   const handleSubmit = () => {
   const updatedData = { ...updatedDetails };
 
-  console.log("Final data to send:", updatedData);
-
-  if (!Array.isArray(bills)) {
-    console.error("❌ bills is undefined or not an array:", bills);
-    return;
+  // 🔥 Convert date string back to Firestore Timestamp
+  if (updatedData.createdAt) {
+    updatedData.createdAt = Timestamp.fromDate(
+      new Date(updatedData.createdAt)
+    );
   }
 
   const updatedBills = bills.map((bill) =>
@@ -193,7 +194,6 @@ const handleInputChange = (e, index = null, type = null) => {
   setBills(updatedBills);
   setIsModalOpen(false);
 
-  // Save to Firestore
   updateBillInFirestore(updatedData.id, updatedData);
 };
 
@@ -620,6 +620,13 @@ doc.text(`Invoice Number: ${formattedInvoiceNumber}`, 150, headerStartY + 1 + 1.
                     value={updatedDetails.customerPan || ""}
                     onChange={(e) => handleInputChange(e)}
                   />
+                  <label>Invoice Date:</label>
+<input
+  type="date"
+  name="createdAt"
+  value={updatedDetails.createdAt || ""}
+  onChange={(e) => handleInputChange(e)}
+/>
                   <h3>Products</h3>
                  {(updatedDetails.productsDetails || []).map((product, index) => (
   <div key={index}>
